@@ -1,6 +1,8 @@
 const CONTEXT_MENU_ID = 'edge-read-aloud-selection';
+const CONTROL_WINDOW_STORAGE_KEY = 'edge-read-aloud-control-window-id';
 let controlWindowId = null;
 let creatingWindow = null;
+let windowStateReadyPromise = null;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -26,7 +28,7 @@ chrome.action.onClicked.addListener(async () => {
     } catch (error) {
       console.warn('关闭窗口失败', error);
     }
-    controlWindowId = null;
+    persistControlWindowId(null);
     return;
   }
   await openControlWindow();
@@ -34,7 +36,7 @@ chrome.action.onClicked.addListener(async () => {
 
 chrome.windows.onRemoved.addListener((windowId) => {
   if (windowId === controlWindowId) {
-    controlWindowId = null;
+    persistControlWindowId(null);
   }
 });
 
@@ -77,12 +79,13 @@ function persistSelectionText(text) {
 }
 
 async function openControlWindow() {
+  await ensureWindowStateReady();
   if (controlWindowId) {
     try {
       await chrome.windows.update(controlWindowId, { focused: true });
       return controlWindowId;
     } catch (error) {
-      controlWindowId = null;
+      persistControlWindowId(null);
     }
   }
 
@@ -97,14 +100,35 @@ async function openControlWindow() {
     height: 720,
     focused: true
   }).then((created) => {
-    controlWindowId = created.id || created.windowId || null;
+    const windowId = created.id || created.windowId || null;
+    persistControlWindowId(windowId);
     creatingWindow = null;
-    return controlWindowId;
+    return windowId;
   }).catch((error) => {
     console.error('无法创建控制窗口', error);
+    persistControlWindowId(null);
     creatingWindow = null;
     return null;
   });
 
   return creatingWindow;
+}
+
+function ensureWindowStateReady() {
+  if (windowStateReadyPromise) {
+    return windowStateReadyPromise;
+  }
+  windowStateReadyPromise = new Promise((resolve) => {
+    chrome.storage.local.get({ [CONTROL_WINDOW_STORAGE_KEY]: null }, (items) => {
+      const storedId = items[CONTROL_WINDOW_STORAGE_KEY];
+      controlWindowId = typeof storedId === 'number' ? storedId : null;
+      resolve();
+    });
+  });
+  return windowStateReadyPromise;
+}
+
+function persistControlWindowId(id) {
+  controlWindowId = id ?? null;
+  chrome.storage.local.set({ [CONTROL_WINDOW_STORAGE_KEY]: controlWindowId }, () => {});
 }
