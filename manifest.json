@@ -10,10 +10,14 @@
     "contextMenus"
   ],
   "host_permissions": [
-    "<all_urls>",
     "https://dev.microsofttranslator.com/*",
     "https://*.tts.speech.microsoft.com/*",
-    "https://*.api.speech.microsoft.com/*"
+    "https://*.api.speech.microsoft.com/*",
+    "https://twitter.com/*",
+    "https://www.twitter.com/*",
+    "https://mobile.twitter.com/*",
+    "https://x.com/*",
+    "https://www.x.com/*"
   ],
   "background": {
     "service_worker": "background.js",

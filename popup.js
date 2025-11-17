@@ -143,6 +143,15 @@ function handleTextChanged() {
   updateSentenceData(textInput.value);
 }
 
+function isMultiSymbolRun(text) {
+  if (!text) return false;
+  const cleaned = text.replace(/\s/g, '');
+  if (cleaned.length <= 1) {
+    return false;
+  }
+  return !/[\p{L}\p{N}]/u.test(cleaned);
+}
+
 function cancelLocalPlayback(options = {}) {
   const { silent = false } = options;
   playbackSessionId++;
@@ -435,17 +444,31 @@ function computeSentenceRanges(text) {
   const delimiters = new Set(['。', '！', '？', '!', '?', '；', ';', '.', '…', '\n']);
   for (let i = 0; i < len; i++) {
     const char = text[i];
+    const isDelim = delimiters.has(char);
     const isLastChar = i === len - 1;
-    if (delimiters.has(char) || isLastChar) {
-      const end = isLastChar && !delimiters.has(char) ? i + 1 : i + 1;
+    if (isDelim) {
+      let end = i + 1;
+      while (end < len && delimiters.has(text[end])) {
+        end++;
+      }
       const slice = text.slice(start, end);
-      const highlightable = slice.trim().length > 0;
+      const trimmed = slice.trim();
+      const highlightable = trimmed.length > 0 && !isMultiSymbolRun(trimmed);
+      ranges.push({ start, end, text: slice, highlightable });
+      start = end;
+      i = end - 1;
+    } else if (isLastChar) {
+      const end = len;
+      const slice = text.slice(start, end);
+      const trimmed = slice.trim();
+      const highlightable = trimmed.length > 0 && !isMultiSymbolRun(trimmed);
       ranges.push({ start, end, text: slice, highlightable });
       start = end;
     }
   }
   if (ranges.length === 0 && text.trim().length > 0) {
-    ranges.push({ start: 0, end: len, text, highlightable: true });
+    const trimmed = text.trim();
+    ranges.push({ start: 0, end: len, text, highlightable: !isMultiSymbolRun(trimmed) });
   }
   return ranges;
 }
