@@ -152,6 +152,11 @@ function isMultiSymbolRun(text) {
   return !/[\p{L}\p{N}]/u.test(cleaned);
 }
 
+function stripInvisibleChars(text) {
+  if (!text) return '';
+  return text.replace(/[\u200B-\u200D\u2060\uFEFF]/g, '');
+}
+
 function cancelLocalPlayback(options = {}) {
   const { silent = false } = options;
   playbackSessionId++;
@@ -452,7 +457,8 @@ function computeSentenceRanges(text) {
         end++;
       }
       const slice = text.slice(start, end);
-      const trimmed = slice.trim();
+      const normalized = stripInvisibleChars(slice);
+      const trimmed = normalized.trim();
       const highlightable = trimmed.length > 0 && !isMultiSymbolRun(trimmed);
       ranges.push({ start, end, text: slice, highlightable });
       start = end;
@@ -460,14 +466,16 @@ function computeSentenceRanges(text) {
     } else if (isLastChar) {
       const end = len;
       const slice = text.slice(start, end);
-      const trimmed = slice.trim();
+      const normalized = stripInvisibleChars(slice);
+      const trimmed = normalized.trim();
       const highlightable = trimmed.length > 0 && !isMultiSymbolRun(trimmed);
       ranges.push({ start, end, text: slice, highlightable });
       start = end;
     }
   }
   if (ranges.length === 0 && text.trim().length > 0) {
-    const trimmed = text.trim();
+    const normalized = stripInvisibleChars(text);
+    const trimmed = normalized.trim();
     ranges.push({ start: 0, end: len, text, highlightable: !isMultiSymbolRun(trimmed) });
   }
   return ranges;
