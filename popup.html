@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Edge Read Aloud</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app__header">
+      <div>
+        <h1>Read Aloud</h1>
+        <p>调用 TTS 为网页文本发声</p>
+      </div>
+      <div class="header-actions">
+        <label class="theme-toggle">
+          <input type="checkbox" id="themeToggle">
+          <span>暗黑模式</span>
+        </label>
+        <span class="badge">未来已到</span>
+      </div>
+    </header>
+
+    <label class="field">
+      <span>讲述人</span>
+      <select id="voiceSelect"></select>
+    </label>
+
+    <label class="field">
+      <span>语速 <strong id="rateValue">0</strong></span>
+      <input type="range" id="rate" min="-50" max="50" step="5" value="0">
+    </label>
+
+    <label class="field">
+      <span>音调 <strong id="pitchValue">0</strong></span>
+      <input type="range" id="pitch" min="-50" max="50" step="5" value="0">
+    </label>
+
+    <label class="field field--textarea">
+      <span>朗读文本</span>
+      <div class="text-area-wrapper">
+        <div id="textOverlay" class="text-overlay" aria-hidden="true"></div>
+        <textarea id="textInput" rows="6" placeholder="输入或粘贴需要朗读的文本，或点击下方按钮抓取当前页面选中内容"></textarea>
+      </div>
+    </label>
+
+    <div class="actions">
+      <button id="selectionBtn" class="secondary">获取选中文本</button>
+      <div class="primary-group">
+        <button id="speakBtn" class="primary">朗读</button>
+        <button id="pauseBtn" class="warning">暂停</button>
+        <button id="clearBtn">清空</button>
+      </div>
+    </div>
+
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <audio id="player" controls preload="none"></audio>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
