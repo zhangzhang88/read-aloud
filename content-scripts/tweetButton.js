@@ -79,14 +79,59 @@
   }
 
   function extractTweetText(article) {
-    const nodes = article.querySelectorAll('[data-testid="tweetText"], [lang]');
+    const nodes = getMainTweetNodes(article);
     const parts = [];
     nodes.forEach(node => {
-      const content = node.innerText || node.textContent || '';
-      if (content.trim()) {
-        parts.push(content.trim());
+      const cleanNode = node.cloneNode(true);
+      cleanNode.querySelectorAll('a').forEach(link => link.remove());
+      const content = cleanNode.innerText || cleanNode.textContent || '';
+      const normalized = normalizeTextContent(content);
+      if (normalized) {
+        parts.push(normalized);
       }
     });
-    return parts.join('\n').trim();
+    return parts.join(' ').trim();
+  }
+
+  function getMainTweetNodes(article) {
+    if (!article) return [];
+    const primaryNode = article.querySelector('[data-testid="tweetText"]');
+    const primaryArticle = primaryNode?.closest('article[data-testid="tweet"], article[role="article"]');
+    if (primaryNode && primaryArticle === article) {
+      return [primaryNode];
+    }
+    const selector = '[data-testid="tweetText"], [lang]';
+    const allNodes = Array.from(article.querySelectorAll(selector));
+    return allNodes.filter(node => {
+      const closestArticle = node.closest('article[data-testid="tweet"], article[role="article"]');
+      if (closestArticle !== article) {
+        return false;
+      }
+      const tweetContainer = node.closest('[data-testid="tweet"]');
+      if (tweetContainer && tweetContainer !== article) {
+        return false;
+      }
+      const quoteLink = node.closest('a[role="link"][data-testid="tweet"]');
+      if (quoteLink) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  function normalizeTextContent(text) {
+    if (!text) return '';
+    const withoutUrls = stripUrls(text);
+    return withoutUrls.replace(/\s+/g, ' ').trim();
+  }
+
+  function stripUrls(text) {
+    const patterns = [
+      /https?:\/\/[^\s]+/gi,
+      /\bwww\.[^\s]+/gi,
+      /\bt\.co\/[^\s]+/gi,
+      /\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/gi
+    ];
+    return patterns.reduce((result, pattern) => result.replace(pattern, ' '), text);
   }
 })();
