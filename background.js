@@ -93,13 +93,37 @@ async function openControlWindow() {
     return creatingWindow;
   }
 
-  creatingWindow = chrome.windows.create({
+  const windowWidth = 360;
+  const windowHeight = 300;
+  const margin = 20;
+  let targetLeft = undefined;
+  let targetTop = margin;
+  try {
+    const anchorWindow = await chrome.windows.getCurrent();
+    if (anchorWindow) {
+      const anchorLeft = anchorWindow.left ?? 0;
+      const anchorTop = anchorWindow.top ?? 0;
+      const anchorWidth = anchorWindow.width ?? windowWidth;
+      targetLeft = Math.max(anchorLeft + anchorWidth - windowWidth - margin, 0);
+      targetTop = Math.max(anchorTop + margin, 0);
+    }
+  } catch (error) {
+    targetLeft = undefined;
+  }
+
+  const createOptions = {
     url: 'popup.html',
     type: 'popup',
-    width: 360,
-    height: 300,
-    focused: true
-  }).then((created) => {
+    width: windowWidth,
+    height: windowHeight,
+    focused: true,
+    top: targetTop
+  };
+  if (typeof targetLeft === 'number') {
+    createOptions.left = targetLeft;
+  }
+
+  creatingWindow = chrome.windows.create(createOptions).then((created) => {
     const windowId = created.id || created.windowId || null;
     persistControlWindowId(windowId);
     creatingWindow = null;
