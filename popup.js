@@ -16,6 +16,8 @@ const textOverlay = document.getElementById('textOverlay');
 const textAreaWrapper = document.querySelector('.text-area-wrapper');
 const themeToggle = document.getElementById('themeToggle');
 const TEXT_PLAYING_CLASS = 'text-area--playing';
+const INITIAL_SCROLL_RATIO = 0.56;
+let viewportScrolled = false;
 const MAX_SEGMENT_CHARS = 260;
 
 const client = new EdgeTtsClient();
@@ -80,6 +82,7 @@ async function initialize() {
   });
   resetPauseButton();
   setupMessageListener();
+  setInitialViewportScroll();
 }
 
 async function loadVoices() {
@@ -482,12 +485,13 @@ function computeSentenceRanges(text) {
 }
 
 function renderSentencePreview() {
-  if (!textOverlay) {
+  if (!textOverlay || !textInput) {
     return;
   }
   if (!sentenceRanges.length) {
     textOverlay.innerHTML = '';
-    syncOverlayScroll();
+    textOverlay.scrollTop = 0;
+    textInput.scrollTop = 0;
     return;
   }
   const html = sentenceRanges
@@ -496,6 +500,7 @@ function renderSentencePreview() {
     )
     .join('');
   textOverlay.innerHTML = html;
+  setInitialScrollPosition();
   syncOverlayScroll();
 }
 
@@ -775,6 +780,34 @@ function syncOverlayScroll() {
   if (!textOverlay) return;
   textOverlay.scrollTop = textInput.scrollTop;
   textOverlay.scrollLeft = textInput.scrollLeft;
+}
+
+function setInitialScrollPosition() {
+  if (!textOverlay || !textInput) return;
+  textInput.scrollTop = 0;
+  textOverlay.scrollTop = 0;
+  const maxScroll = Math.max(textInput.scrollHeight - textInput.clientHeight, 0);
+  if (maxScroll <= 0) {
+    return;
+  }
+  const target = Math.min(Math.max(maxScroll * INITIAL_SCROLL_RATIO, 0), maxScroll);
+  textInput.scrollTop = target;
+  textOverlay.scrollTop = target;
+}
+
+function setInitialViewportScroll() {
+  if (viewportScrolled) return;
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+  if (scrollable <= 0) {
+    return;
+  }
+  requestAnimationFrame(() => {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= 0) return;
+    const target = Math.min(Math.max(maxScroll * INITIAL_SCROLL_RATIO, 0), maxScroll);
+    window.scrollTo(0, target);
+    viewportScrolled = true;
+  });
 }
 
 function findHighlightableIndex(startIndex) {

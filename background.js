@@ -96,8 +96,8 @@ async function openControlWindow() {
   creatingWindow = chrome.windows.create({
     url: 'popup.html',
     type: 'popup',
-    width: 420,
-    height: 720,
+    width: 360,
+    height: 300,
     focused: true
   }).then((created) => {
     const windowId = created.id || created.windowId || null;
