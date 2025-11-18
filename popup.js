@@ -449,7 +449,7 @@ function computeSentenceRanges(text) {
   const ranges = [];
   let start = 0;
   const len = text.length;
-  const delimiters = new Set(['。', '！', '？', '!', '?', '；', ';', '.', '…', '\n']);
+  const delimiters = new Set(['。', '！', '？', '!', '?', '；', ';', '.', '…', '\n', '，', ',']);
   for (let i = 0; i < len; i++) {
     const char = text[i];
     const isDelim = delimiters.has(char);
